@@ -59,9 +59,7 @@ function fetchPlaces() {
 
   postData('http://0.0.0.0:5001/api/v1/places_search/')
     .then(data => {
-      console.log(data)
       for (const place of data) {
-        console.log(place.name);
         var lugar=document.getElementById("buscar");
         let element = document.createElement("place");
         let textohtml = "<article><div class='title_box'><h2>" + place.name + "</h2><div class='price_by_night'>" + place.price_by_night + " $</div>" +
