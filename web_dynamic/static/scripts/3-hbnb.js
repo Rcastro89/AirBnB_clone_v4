@@ -1,58 +1,79 @@
-$(document).ready(init);
+function docReady(fn) {
+  // see if DOM is already available
+  if (document.readyState === "complete" || document.readyState === "interactive") {
+    // call on next available tick
+    setTimeout(fn, 1);
+  } else {
+    document.addEventListener("DOMContentLoaded", fn);
+  }
+}
 
-function init () {
-  const amenityObj = {};
-  $('.amenities .popover input').change(function () {
-    if ($(this).is(':checked')) {
-      amenityObj[$(this).attr('data-name')] = $(this).attr('data-id');
-    } else if ($(this).is(':not(:checked)')) {
-      delete amenityObj[$(this).attr('data-name')];
-    }
-    const names = Object.keys(amenityObj);
-    $('.amenities h4').text(names.sort().join(', '));
-  });
+docReady(function () {
+  // DOM is loaded and ready for manipulation here
+  let objetos = {};
+  var checkbox = document.getElementsByClassName('pru');
+  for (let x = 0; x < checkbox.length; x++) {
+    checkbox[x].addEventListener('change', function () {
+      if (checkbox[x].checked) {
+        objetos[checkbox[x].getAttribute('data-name')] = checkbox[x].getAttribute('data-id');
+      } else {
+        delete objetos[checkbox[x].getAttribute('data-name')]
+      }
+      let nombre = Object.keys(objetos);
+      document.getElementById('ame-select').innerHTML = nombre;
+    });
+  }
 
   apiStatus();
   fetchPlaces();
+
+});
+
+function apiStatus() {
+  var req = new XMLHttpRequest();
+  req.open('GET', 'http://0.0.0.0:5001/api/v1/status/', false);
+  req.send(null);
+  if (req.status == 200) {
+    let conectado = document.getElementById('api_status');
+    conectado.className = 'available';
+  } else {
+    let conectado = document.getElementById('api_status');
+    conectado.className = '';
+  }
 }
 
-function apiStatus () {
-  $.get('http://0.0.0.0:5001/api/v1/status/', (data, textStatus) => {
-    if (textStatus === 'success' && data.status === 'OK') {
-      $('#api_status').addClass('available');
-    } else {
-      $('#api_status').removeClass('available');
-    }
-  });
-}
+function fetchPlaces() {
+  // Ejemplo implementando el metodo POST:
+  async function postData(url = '', data = {}) {
+    // Opciones por defecto estan marcadas con un *
+    const response = await fetch(url, {
+      method: 'POST', // *GET, POST, PUT, DELETE, etc.
+      headers: {
+        'Content-Type': 'application/json'
+        // 'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: JSON.stringify(data) // body data type must match "Content-Type" header
+    });
+    return response.json(); // parses JSON response into native JavaScript objects
+  }
 
-function fetchPlaces () {
-  $.ajax({
-    url: 'http://0.0.0.0:5001/api/v1/places_search/',
-    type: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    data: JSON.stringify({}),
-    success: function (response) {
-      for (const r of response) {
-        const article = ['<article>',
-          '<div class="title_box">',
-        `<h2>${r.name}</h2>`,
-        `<div class="price_by_night">$${r.price_by_night}</div>`,
-        '</div>',
-        '<div class="information">',
-        `<div class="max_guest">${r.max_guest} Guest(s)</div>`,
-        `<div class="number_rooms">${r.number_rooms} Bedroom(s)</div>`,
-        `<div class="number_bathrooms">${r.number_bathrooms} Bathroom(s)</div>`,
-        '</div>',
-        '<div class="description">',
-        `${r.description}`,
-        '</div>',
-        '</article>'];
-        $('SECTION.places').append(article.join(''));
-      }
-    },
-    error: function (error) {
-      console.log(error);
-    }
-  });
+  postData('http://0.0.0.0:5001/api/v1/places_search/')
+    .then(data => {
+      console.log(data)
+      for (const place of data) {
+        console.log(place.name);
+        var lugar=document.getElementById("buscar");
+        let element = document.createElement("place");
+        let textohtml = "<article><div class='title_box'><h2>" + place.name + "</h2><div class='price_by_night'>" + place.price_by_night + " $</div>" +
+        "</div>" +
+        "<div class='information'>" +
+        "<div class='max_guest'>" + place.max_guest + "Guest(s)</div>" +
+        "<div class='number_rooms'> " + place.number_rooms + "Bedroom(s)</div>" +
+        "<div class='number_bathrooms'> " + place.number_bathrooms + "Bathroom(s)</div>" +
+        "</div>" +
+        "<div class='description'>" + place.description + "</div></article>";
+        element.innerHTML=(textohtml);
+        lugar.appendChild((element))
+    } return data;
+    });
 }
